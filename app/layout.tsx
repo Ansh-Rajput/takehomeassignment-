@@ -41,9 +41,7 @@ export default function RootLayout({
 
           <main className="app">
             <Nav />
-            {/* <AuthGuard> */}
-            {children}
-            {/* </AuthGuard> */}
+            <AuthGuard>{children}</AuthGuard>
           </main>
         </ThemeProvider>
       </body>

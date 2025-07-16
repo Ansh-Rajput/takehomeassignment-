@@ -10,6 +10,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { createClient } from "@/lib/supabase/client";
+import { getFaviconFromUrl } from "@/lib/utils";
 
 const { copy, linkIcon, loader, tick } = icons;
 
@@ -36,10 +38,24 @@ const Demo = () => {
 
     try {
       setIsSubmitting(true);
-      const target = encodeURIComponent(query?.trim());
-      const res = await fetch(`https://r.jina.ai/${target}`);
-      const summary = await res.text();
-      setSummary(summary);
+      const target = encodeURIComponent(query?.split(":")?.[1]?.trim());
+      // const res = await fetch(`https://r.jina.ai/${target}`);
+      // const summary = await res.text();
+      const summary = "somthing";
+
+      if (summary) {
+        const response = await fetch("/api/posts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url: target,
+            favicon: getFaviconFromUrl(query),
+            summary,
+          }),
+        });
+
+        setSummary(summary);
+      }
     } catch (error) {
       console.log(error);
     } finally {
@@ -136,11 +152,16 @@ const Demo = () => {
           )
         )}
       </div> */}
+      <div className="my-10 max-w-full flex justify-center items-center">
+        {isSubmitting && (
+          <img src={loader} alt="loader" className="w-20 h-20 object-contain" />
+        )}
+      </div>
       <Dialog open={summary} onOpenChange={() => setSummary("")}>
         <DialogContent className=" min-w-[90vw]  summary_box">
           <DialogHeader>
             <h2 className="font-satoshi font-bold text-gray-600 text-xl">
-              Article <span className="blue_gradient">Summary</span>
+              URL <span className="blue_gradient">Summary</span>
             </h2>
           </DialogHeader>
           <pre className="font-inter font-medium text-sm max-h-[90vh] text-gray-700  overflow-y-scroll scroll-container">

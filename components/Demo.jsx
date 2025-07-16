@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
 import { getFaviconFromUrl } from "@/lib/utils";
+import { Trash } from "lucide-react";
 
 const { copy, linkIcon, loader, tick } = icons;
 
@@ -21,10 +22,7 @@ const Demo = () => {
   const [history, setHistory] = useState([]);
   const [isLodingHistory, setIsLodingHistory] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(false);
-  const [article, setArticle] = useState({ url: "", summary: "" });
-  const [allArticle, setAllArticle] = useState([]);
-  const [copyed, setCopyed] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getHistory = async () => {
     try {
@@ -54,20 +52,21 @@ const Demo = () => {
     try {
       setIsSubmitting(true);
       const target = encodeURIComponent(query?.split(":")?.[1]?.trim());
-      // const res = await fetch(`https://r.jina.ai/${target}`);
-      // const summary = await res.text();
-      const summary = "somthing";
+      const res = await fetch(`https://r.jina.ai/${target}`);
+      const summary = await res.text();
 
       if (summary) {
         const response = await fetch("/api/posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            url: target,
+            url: query,
             favicon: getFaviconFromUrl(query),
             summary,
           }),
         });
+
+        await getHistory();
 
         setSummary(summary);
       }
@@ -78,10 +77,18 @@ const Demo = () => {
     }
   };
 
-  const handleCopy = (copyUrl) => {
-    setCopyed(copyUrl);
-    navigator.clipboard.writeText(copyUrl);
-    setTimeout(() => setCopyed(false), 3000);
+  const handleDelete = async (id) => {
+    try {
+      setIsDeleting(true);
+      await fetch(`/api/posts?id=${id}`, {
+        method: "DELETE",
+      });
+      await getHistory();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -119,21 +126,33 @@ const Demo = () => {
         <div className="flex flex-col gap-1 max-h-96 overflow-y-scroll scroll-container">
           {history?.map((item, index) => {
             return (
-              <div
-                key={`link-${index}`}
-                onClick={() => setSummary(item?.summary)}
-                className="link_card"
-              >
-                <div className="copy_btn" onClick={() => handleCopy(item.url)}>
+              <div key={`link-${index}`} className="link_card">
+                <div className="copy_btn">
                   <img
                     src={item.favicon}
                     alt="copyIcon"
                     className="w-[40%] h-[40%] object-contain"
                   />
                 </div>
-                <p className="flex-1 font-satoshi text-blue-700 font-medium text-sm truncate">
+                <p
+                  className="flex-1 font-satoshi text-blue-700 font-medium text-sm truncate"
+                  onClick={() => setSummary(item?.summary)}
+                >
                   {item.url}
                 </p>
+                {!isDeleting ? (
+                  <Trash
+                    size={15}
+                    className="text-red-500"
+                    onClick={() => handleDelete(item?.id)}
+                  />
+                ) : (
+                  <img
+                    src={loader}
+                    alt="loader"
+                    className="w-5 object-contain"
+                  />
+                )}
               </div>
             );
           })}
@@ -141,7 +160,7 @@ const Demo = () => {
       </div>
 
       <div className="my-10 max-w-full flex justify-center items-center">
-        {isSubmitting && (
+        {(isSubmitting || isLodingHistory) && (
           <img src={loader} alt="loader" className="w-20 h-20 object-contain" />
         )}
       </div>

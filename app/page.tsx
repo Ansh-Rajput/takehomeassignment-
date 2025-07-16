@@ -13,7 +13,7 @@ const Home = () => {
       <p className="desc text-center">
         Link Saver is an AI-powered tool that helps you capture, summarize, and
         save useful web content. Simply paste any link to generate a concise
-        summary and store personalized notes for future reference.
+        summary and store it for future reference.
       </p>
       <Feed />
     </section>

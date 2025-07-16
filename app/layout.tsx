@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Nav from "@/components/Nav";
+import AuthGuard from "@/components/AuthGuard";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
@@ -33,7 +35,16 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <div className="main">
+            <div className="gradient"></div>
+          </div>
+
+          <main className="app">
+            <Nav />
+            {/* <AuthGuard> */}
+            {children}
+            {/* </AuthGuard> */}
+          </main>
         </ThemeProvider>
       </body>
     </html>

@@ -18,21 +18,36 @@ const { copy, linkIcon, loader, tick } = icons;
 const Demo = () => {
   const [query, setQuery] = useState("");
   const [summary, setSummary] = useState("");
+  const [history, setHistory] = useState([]);
+  const [isLodingHistory, setIsLodingHistory] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(false);
   const [article, setArticle] = useState({ url: "", summary: "" });
   const [allArticle, setAllArticle] = useState([]);
   const [copyed, setCopyed] = useState("");
 
-  useEffect(() => {
-    const articlesFromLocalStorage = JSON.parse(
-      localStorage.getItem("articles")
-    );
-    if (articlesFromLocalStorage) {
-      setAllArticle(articlesFromLocalStorage);
+  const getHistory = async () => {
+    try {
+      setIsLodingHistory(true);
+      const response = await fetch("/api/posts", {
+        method: "GET",
+      });
+
+      const history = await response?.json();
+      setHistory(history?.posts || []);
+      return history;
+    } catch (error) {
+      console.log(error);
+      return [];
+    } finally {
+      setIsLodingHistory(false);
     }
+  };
+
+  useEffect(() => {
+    getHistory();
   }, []);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(false);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -68,9 +83,10 @@ const Demo = () => {
     navigator.clipboard.writeText(copyUrl);
     setTimeout(() => setCopyed(false), 3000);
   };
+
   return (
     <section className="mt-16 w-full max-w-xl">
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full gap-2">
         <form
           className="relative flex justify-center items-center"
           onSubmit={handleSubmit}
@@ -100,17 +116,17 @@ const Demo = () => {
           </button>
         </form>
         {/* Browse URL History */}
-        <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
-          {allArticle.slice(0, 5).map((item, index) => {
+        <div className="flex flex-col gap-1 max-h-96 overflow-y-scroll scroll-container">
+          {history?.map((item, index) => {
             return (
               <div
                 key={`link-${index}`}
-                onClick={() => setArticle(item)}
+                onClick={() => setSummary(item?.summary)}
                 className="link_card"
               >
                 <div className="copy_btn" onClick={() => handleCopy(item.url)}>
                   <img
-                    src={copyed === item.url ? tick : copy}
+                    src={item.favicon}
                     alt="copyIcon"
                     className="w-[40%] h-[40%] object-contain"
                   />
@@ -124,39 +140,12 @@ const Demo = () => {
         </div>
       </div>
 
-      {/* Diaplay Results */}
-
-      {/* <div className="my-10 max-w-full flex justify-center items-center">
-        {isSubmitting ? (
-          <img src={loader} alt="loader" className="w-20 h-20 object-contain" />
-        ) : error ? (
-          <p className="font-inter font-bold text-black text-center">
-            Well, that wasn&apos;t supposed to happen...
-            <br />
-            <span className="font-satoshi font-normal text-gray-700">
-              {error?.data?.error}
-            </span>
-          </p>
-        ) : (
-          summary && (
-            <div className="flex flex-col gap-3 container">
-              <h2 className="font-satoshi font-bold text-gray-600 text-xl">
-                Article <span className="blue_gradient">Summary</span>
-              </h2>
-              <div className="summary_box">
-                <p className="font-inter font-medium text-sm text-gray-700">
-                  {summary}
-                </p>
-              </div>
-            </div>
-          )
-        )}
-      </div> */}
       <div className="my-10 max-w-full flex justify-center items-center">
         {isSubmitting && (
           <img src={loader} alt="loader" className="w-20 h-20 object-contain" />
         )}
       </div>
+
       <Dialog open={summary} onOpenChange={() => setSummary("")}>
         <DialogContent className=" min-w-[90vw]  summary_box">
           <DialogHeader>

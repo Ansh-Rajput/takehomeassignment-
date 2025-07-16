@@ -48,7 +48,7 @@ export async function GET() {
   // Get all posts for the user
   const { data: posts, error } = await supabase
     .from("posts")
-    .select("*")
+    .select("id, url, favicon, summary, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 

@@ -14,7 +14,7 @@ const Nav = () => {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      router.push("/login");
+      router.push("/auth/login");
     } catch (error) {
       console.log("error:", error);
     }
